@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelegramPlugin", "TelegramPlugin\TelegramPlugin.csproj", "{7CB389C0-81C3-4E20-B999-66BCCE8A46E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelegramPlugin.Sample", "TelegramPlugin.Sample\TelegramPlugin.Sample.csproj", "{2CF890ED-2CBE-438D-95B3-0B1C9D14AA2B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelegramPlugin.StreamerBot", "TelegramPlugin.StreamerBot\TelegramPlugin.StreamerBot.csproj", "{2CF890ED-2CBE-438D-95B3-0B1C9D14AA2B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelegramPlugin.Tests", "TelegramPlugin.Tests\TelegramPlugin.Tests.csproj", "{D02EBA78-E81B-4186-87DB-44FD6681A76F}"
 EndProject

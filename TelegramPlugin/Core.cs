@@ -5,32 +5,29 @@ using TelegramPlugin.Services;
 
 namespace TelegramPlugin;
 
-public class PluginEntry
+internal class PluginEntry
 {
-    private readonly TelegramGateway _gateway;
-    private readonly InputParser _parser;
+    private readonly InputParser _parser = new();
+    private readonly Orchestrator _orchestrator;
+    private readonly IPluginLogger _logger;
 
-    public PluginEntry(string token, HttpClient sharedClient)
-    {   
-        _gateway = new TelegramGateway(token, sharedClient);
-        _parser = new InputParser();
+    public PluginEntry(string token, HttpClient sharedClient, IPluginLogger logger, IPersistenceLayer persistence)
+    {
+        _logger = logger;
+        var stateManager = new StateManager(persistence);
+        var gateway = new TelegramGateway(token, sharedClient, logger);
+        _orchestrator = new Orchestrator(gateway, stateManager, logger);
     }
 
-    public async Task ExecuteAsync(
-        Dictionary<string, object> args,
-        IPersistenceLayer persistence,
-        IPluginLogger logger)
+    public async Task ExecuteAsync(Dictionary<string, object> args)
     {
         var parseResult = _parser.Parse(args);
         if (!parseResult.IsSuccess)
         {
-            logger.Error($"Config Error: {parseResult.ErrorMessage}");
+            _logger.Error($"Config Error: {parseResult.ErrorMessage}");
             return;
         }
 
-        var stateManager = new StateManager(persistence);
-        var orchestrator = new Orchestrator(_gateway, stateManager, logger);
-
-        await orchestrator.ProcessRequestAsync(parseResult.Data);
+        await _orchestrator.ProcessRequestAsync(parseResult.Data);
     }
 }

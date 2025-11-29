@@ -3,28 +3,23 @@
     <PropertyGroup>
         <OutputType>Library</OutputType>
         <TargetFramework>net481</TargetFramework>
-        <LangVersion>latest</LangVersion>
+        <LangVersion>13</LangVersion>
         <ImplicitUsings>false</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <UserSecretsId>31d62534-f9d8-4b1c-80d0-98cdff681e1d</UserSecretsId>
         <Version>1.0.2</Version>
         <Authors>Ivnjey</Authors>
+        <UserSecretsId>31d62534-f9d8-4b1c-80d0-98cdff681e1d</UserSecretsId>
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>ivnjey-dev.snk</AssemblyOriginatorKeyFile>
         <RootNamespace>TelegramPlugin</RootNamespace>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
 
+
     <ItemGroup>
-        <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0"/>
         <PackageReference Include="System.Net.Http" Version="4.3.4"/>
-        <PackageReference Include="System.Text.Json" Version="9.0.11"/>
-        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3"/>
         <PackageReference Include="Telegram.Bot" Version="22.7.5"/>
     </ItemGroup>
-    
+
 
 </Project>
