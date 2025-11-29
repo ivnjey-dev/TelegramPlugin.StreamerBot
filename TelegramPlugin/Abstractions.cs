@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TelegramPlugin.Models;
 
@@ -11,8 +12,8 @@ public interface ITelegramGateway
 
 public interface IPersistenceLayer
 {
-    T Get<T>(string key);
-    void Set<T>(string key, T value);
+    Dictionary<string, int>? Get();
+    void Set(Dictionary<string, int> value);
 }
 
 public interface IPluginLogger
@@ -20,5 +21,5 @@ public interface IPluginLogger
     void Info(string message);
 
     void Error(string message);
-    // void Norify(string prefix, string message);// todo: add notify log level
+    void Norify(string message);
 }
