@@ -14,6 +14,7 @@ internal class InputParser
 
     public OperationResult<SendRequest?> Parse(IDictionary<string, object> args)
     {
+        
         if (!TryGetLong(args, "tg_chatId", out long chatId))
         {
             return OperationResult<SendRequest>.Failure("tg_chatId is missing or invalid.");
@@ -37,7 +38,7 @@ internal class InputParser
 
         req.MediaType = mediaResult.Data;
         req.MediaPath = GetString(args, "tg_media_path");
-
+        // todo добавить key для принудительного удаления поста по ключу из другой группы.
         var buttonsResult = CollectButtons(args);
         if (!buttonsResult.IsSuccess)
         {

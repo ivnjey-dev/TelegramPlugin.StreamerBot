@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DefaultNamespace;
+namespace TelegramPlugin.StreamerBot;
 
 public static class CloneDictionary
 {

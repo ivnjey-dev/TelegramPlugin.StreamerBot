@@ -15,10 +15,11 @@ namespace TelegramPlugin.Services;
 
 internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogger logger) : ITelegramGateway
 {
-    private readonly TelegramBotClient _bot = new(token, httpClient);
-
     public async Task<int> SendAsync(SendRequest req)
     {
+        // await Task.Delay(1500);
+        var bot = new TelegramBotClient(token, httpClient);
+
         var safeText = req.Text?.SmartEscape() ?? "";
         var markup = BuildMarkup(req.Buttons);
 
@@ -32,7 +33,7 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
                 return -1;
             case true:
             {
-                var msg = await _bot.SendMessage(req.ChatId, safeText, ParseMode.Markdown, replyMarkup: markup,
+                var msg = await bot.SendMessage(req.ChatId, safeText, ParseMode.Markdown, replyMarkup: markup,
                     messageThreadId: req.TopicId);
                 return msg.MessageId;
             }
@@ -45,24 +46,25 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
         Telegram.Bot.Types.Message mediaMsg;
         if (req.MediaType == MediaType.Photo)
         {
-            mediaMsg = await _bot.SendPhoto(req.ChatId, file, caption: safeText, parseMode: ParseMode.Markdown,
+            mediaMsg = await bot.SendPhoto(req.ChatId, file, caption: safeText, parseMode: ParseMode.Markdown,
                 replyMarkup: markup, messageThreadId: req.TopicId);
         }
         else
         {
-            mediaMsg = await _bot.SendVideo(req.ChatId, file, caption: safeText, parseMode: ParseMode.Markdown,
+            mediaMsg = await bot.SendVideo(req.ChatId, file, caption: safeText, parseMode: ParseMode.Markdown,
                 replyMarkup: markup, messageThreadId: req.TopicId, supportsStreaming: true);
         }
 
         return mediaMsg.MessageId;
     }
 
-
     public async Task DeleteAsync(long chatId, int messageId)
     {
+        // await Task.Delay(1500);
         try
         {
-            await _bot.DeleteMessage(chatId, messageId);
+            var bot = new TelegramBotClient(token, httpClient);
+            await bot.DeleteMessage(chatId, messageId);
         }
         catch (Exception ex)
         {
