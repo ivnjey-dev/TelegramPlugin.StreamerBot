@@ -17,6 +17,7 @@ public class ProxyPersistence(IInlineInvokeProxy cph, string key, IPluginLogger 
         catch (Exception e)
         {
             logger.Error(e.Message);
+            logger.Notify(e.Message);
             return new Dictionary<string, int>();
         }
     }

@@ -44,6 +44,8 @@ namespace TelegramPlugin.Models
         public string? StateKey { get; set; }
         public bool DeletePrevious { get; set; }
         public bool DeleteAllKeys { get; set; }
+        public bool DeleteFile { get; set; }
+        public bool Notification { get; set; } = true;
     }
 
     public class ButtonDto(string text, string url)

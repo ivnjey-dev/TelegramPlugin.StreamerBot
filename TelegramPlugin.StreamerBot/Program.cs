@@ -28,7 +28,7 @@ public class PluginMain
             string.IsNullOrWhiteSpace(tokenObj?.ToString()))
         {
             _logger.Error("Bot token missing. Please set 'tg_bot_token' argument.");
-            _logger.Norify("Нет tg_bot_token в аргументах");
+            _logger.Notify("Нет tg_bot_token в аргументах");
             return false;
         }
 

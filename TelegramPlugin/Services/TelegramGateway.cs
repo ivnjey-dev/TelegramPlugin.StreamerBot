@@ -17,7 +17,6 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
 {
     public async Task<int> SendAsync(SendRequest req)
     {
-        // await Task.Delay(1500);
         var bot = new TelegramBotClient(token, httpClient);
 
         var safeText = req.Text?.SmartEscape() ?? "";
@@ -39,6 +38,9 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
             }
         }
 
+        // var fileBytes = File.ReadAllBytes(req.MediaPath!);
+        // var fileName = Path.GetFileName(req.MediaPath);
+        // var file = InputFile.FromStream(new MemoryStream(fileBytes), fileName);
         // Медиа
         using var stream = File.OpenRead(req.MediaPath!);
         var file = new Telegram.Bot.Types.InputFileStream(stream, Path.GetFileName(req.MediaPath));
@@ -60,7 +62,6 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
 
     public async Task DeleteAsync(long chatId, int messageId)
     {
-        // await Task.Delay(1500);
         try
         {
             var bot = new TelegramBotClient(token, httpClient);
@@ -69,6 +70,7 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
         catch (Exception ex)
         {
             logger.Error(ex.Message);
+            logger.Notify(ex.Message);
         }
     }
 

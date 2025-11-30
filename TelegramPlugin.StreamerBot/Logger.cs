@@ -14,7 +14,7 @@ public class Logger(IInlineInvokeProxy cph, string prefix) : IPluginLogger
         cph.LogError($"{prefix}: {message}");
     }
 
-    public void Norify(string message)
+    public void Notify(string message)
     {
         cph.ShowToastNotification(prefix, message);
     }

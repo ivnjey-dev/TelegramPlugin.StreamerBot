@@ -8,7 +8,7 @@ namespace TelegramPlugin;
 
 internal class PluginEntry
 {
-    private readonly SemaphoreSlim Gate = new(1, 1);
+    private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly InputParser _parser = new();
     private readonly Orchestrator _orchestrator;
     private readonly IPluginLogger _logger;
@@ -28,11 +28,12 @@ internal class PluginEntry
         if (!parseResult.IsSuccess)
         {
             _logger.Error($"Config Error: {parseResult.ErrorMessage}");
+            _logger.Notify($"Config Error: {parseResult.ErrorMessage}");
             return;
         }
 
         // _logger.Info("ожидаем вход в поток...");
-        await Gate.WaitAsync();
+        await _gate.WaitAsync();
         // _logger.Info("вошли в поток...");
 
         try
@@ -42,11 +43,12 @@ internal class PluginEntry
         catch (System.Exception ex)
         {
             _logger.Error($"Execution Error: {ex.Message}");
+            _logger.Notify($"Execution Error: {ex.Message}");
         }
         finally
         {
             // _logger.Info("вышли из потока...");
-            Gate.Release();
+            _gate.Release();
         }
     }
 }

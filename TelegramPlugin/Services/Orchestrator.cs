@@ -39,6 +39,7 @@ internal class Orchestrator(ITelegramGateway gateway, StateManager stateManager,
         catch (Exception ex)
         {
             logger.Error($"Telegram API Error: {ex.Message}");
+            logger.Notify($"Telegram API Error: {ex.Message}");
         }
     }
 }
