@@ -11,24 +11,37 @@ internal class InputParser
     // todo переименовать префиксы и переменные
     private readonly string _argBtnPrefix = "tg_btn_";
     private readonly string _argLayout = "tg_layout";
+    private readonly string _tgChatId = "tg_chatId";
+    private readonly string _tgTopicId = "tg_topicId";
+    private readonly string _tgText = "tg_text";
+    private readonly string _tgStateKey = "tg_state_key";
+    private readonly string _tgDeletePrevious = "tg_delete_prev";
+    private readonly string _tgDeleteAllKeys = "tg_delete_all";
+    private readonly string _tgDeleteFile = "tg_delete_file";
+    private readonly string _tgMediaPath = "tg_media_path";
+    private readonly string _tgMediaType = "tg_media_type";
+    private readonly string _tgNotification = "tg_notification";
 
     public OperationResult<SendRequest?> Parse(IDictionary<string, object> args)
     {
-        
-        if (!TryGetLong(args, "tg_chatId", out long chatId))
+        if (!TryGetLong(args, _tgChatId, out long chatId))
         {
-            return OperationResult<SendRequest>.Failure("tg_chatId is missing or invalid.");
+            return OperationResult<SendRequest>.Failure($"{_tgChatId} is missing or invalid.");
         }
 
         var req = new SendRequest
         {
             ChatId = chatId,
-            TopicId = TryGetInt(args, "tg_topicId", out var tid) ? tid : null,
-            Text = GetString(args, "tg_text") ?? "",
-            StateKey = GetString(args, "tg_state_key"),
-            DeletePrevious = GetBool(args, "tg_delete_prev"),
-            DeleteAllKeys = GetBool(args, "tg_delete_all")
+            TopicId = TryGetInt(args, _tgTopicId, out var tid) ? tid : null,
+            Text = GetString(args, _tgText) ?? "",
+            StateKey = GetString(args, _tgStateKey),
+            DeletePrevious = GetBool(args, _tgDeletePrevious),
+            DeleteAllKeys = GetBool(args, _tgDeleteAllKeys),
+            DeleteFile = GetBool(args, _tgDeleteFile),
         };
+        if (args.TryGetValue(_tgNotification, out var valNotify) &&
+            bool.TryParse(valNotify.ToString(), out var isNotification))
+            req.Notification = isNotification;
 
         var mediaResult = ResolveMedia(args);
         if (!mediaResult.IsSuccess)
@@ -37,7 +50,7 @@ internal class InputParser
         }
 
         req.MediaType = mediaResult.Data;
-        req.MediaPath = GetString(args, "tg_media_path");
+        req.MediaPath = GetString(args, _tgMediaPath);
         // todo добавить key для принудительного удаления поста по ключу из другой группы.
         var buttonsResult = CollectButtons(args);
         if (!buttonsResult.IsSuccess)
@@ -59,9 +72,9 @@ internal class InputParser
     // Определяет тип сообщения на основе запроса и наличия файла.
     private OperationResult<MediaType> ResolveMedia(IDictionary<string, object> args)
     {
-        var path = GetString(args, "tg_media_path");
+        var path = GetString(args, _tgMediaPath);
 
-        var typeStr = GetString(args, "tg_media_type")?.ToLower();
+        var typeStr = GetString(args, _tgMediaType)?.ToLower();
 
         switch (typeStr)
         {
