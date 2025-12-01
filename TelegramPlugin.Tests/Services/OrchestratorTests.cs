@@ -126,7 +126,7 @@ namespace TelegramPlugin.Tests
 
     public class MockGatewayForState : ITelegramGateway
     {
-        private int _counter = 0;
+        private int _counter;
 
         public Task<OperationResult<Response>> SendAsync(SendRequest req)
         {

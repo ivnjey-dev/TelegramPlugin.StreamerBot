@@ -32,7 +32,7 @@ internal class PluginEntry
             return;
         }
 
-        var req = parseResult.Data!;
+        var req = parseResult.Data;
 
         await _gate.WaitAsync();
         try

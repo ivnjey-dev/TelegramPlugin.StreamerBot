@@ -51,7 +51,7 @@ namespace TelegramPlugin.Models
 
     public class Response
     {
-        // public Message Message { get; set; }
+        // public Message Message { get; set; }// добавлю если понадобится...
         public int MessageId { get; set; }
     }
 

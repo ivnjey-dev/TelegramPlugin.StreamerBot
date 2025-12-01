@@ -19,7 +19,6 @@ namespace TelegramPlugin.Tests.Services
         protected ITelegramGateway Gateway;
         protected HttpClient HttpClient;
         protected IPluginLogger Logger;
-        protected string TempTestToken;
         protected string TempPhotoPath;
         protected string TempVideoPath;
         protected readonly SemaphoreSlim Gate = new(1, 1);

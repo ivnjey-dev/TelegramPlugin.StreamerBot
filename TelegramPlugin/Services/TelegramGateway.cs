@@ -26,14 +26,13 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
             var isTextOnly = req.MediaType == MediaType.Text ||
                              (req.MediaType == MediaType.Auto &&
                               (string.IsNullOrEmpty(req.MediaPath) || !File.Exists(req.MediaPath)));
-            //todo сделать тест на пустом и неверном пути.
             if (!isTextOnly && !File.Exists(req.MediaPath))
                 return OperationResult<Response>.Failure("[ERROR] File not found");
             var msgId = isTextOnly
                 ? (await bot.SendMessage(req.ChatId, safeText, ParseMode.Markdown, replyMarkup: markup,
                     messageThreadId: req.TopicId)).MessageId
                 : await SendMediaAsync(bot, req, safeText, markup);
-            //todo определить неудачная отправка всегда вызовет исключения
+            //todo определить неудачная отправка всегда вызовет исключения?
             //или же мы получим просто какой то ответ
 
             return OperationResult<Response>.Success(new Response { MessageId = msgId });
@@ -50,7 +49,8 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
         }
     }
 
-    private async Task<int> SendMediaAsync(ITelegramBotClient bot, SendRequest req, string caption, InlineKeyboardMarkup? markup)
+    private async Task<int> SendMediaAsync(ITelegramBotClient bot, SendRequest req, string caption,
+        InlineKeyboardMarkup? markup)
     {
         using var stream = File.OpenRead(req.MediaPath!);
         var file = new Telegram.Bot.Types.InputFileStream(stream, Path.GetFileName(req.MediaPath));
