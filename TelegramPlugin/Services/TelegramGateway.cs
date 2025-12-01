@@ -15,7 +15,7 @@ namespace TelegramPlugin.Services;
 
 internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogger logger) : ITelegramGateway
 {
-    public async Task<int> SendAsync(SendRequest req)
+    public async Task<OperationResult<Response>> SendAsync(SendRequest req)
     {
         var bot = new TelegramBotClient(token, httpClient);
 
@@ -28,13 +28,13 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
 
         switch (isTextOnly)
         {
-            case false when !File.Exists(req.MediaPath):
-                return -1;
+            case false when !File.Exists(req.MediaPath): //todo сделать тест на пустом и неверном пути.
+                return OperationResult<Response>.Failure("File not exists")!;
             case true:
             {
                 var msg = await bot.SendMessage(req.ChatId, safeText, ParseMode.Markdown, replyMarkup: markup,
                     messageThreadId: req.TopicId);
-                return msg.MessageId;
+                return OperationResult<Response>.Success(new Response { Message = msg });
             }
         }
 
@@ -57,7 +57,7 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
                 replyMarkup: markup, messageThreadId: req.TopicId, supportsStreaming: true);
         }
 
-        return mediaMsg.MessageId;
+        return OperationResult<Response>.Success(new Response { Message = mediaMsg });
     }
 
     public async Task DeleteAsync(long chatId, int messageId)
@@ -70,7 +70,7 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
         catch (Exception ex)
         {
             logger.Error(ex.Message);
-            logger.Notify(ex.Message);
+            // logger.Notify(ex.Message); // оверхед, будет логировать попытку удаления уже удаленных
         }
     }
 

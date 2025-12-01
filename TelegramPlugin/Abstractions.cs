@@ -6,7 +6,7 @@ namespace TelegramPlugin;
 
 public interface ITelegramGateway
 {
-    Task<int> SendAsync(SendRequest req);
+    Task<OperationResult<Response>> SendAsync(SendRequest req);
     Task DeleteAsync(long chatId, int messageId);
 }
 
