@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +13,6 @@ internal class PluginEntry
     private readonly InputParser _parser = new();
     private readonly Orchestrator _orchestrator;
     private readonly IPluginLogger _logger;
-    // private HttpClient sharedClient;
 
     public PluginEntry(string token, HttpClient sharedClient, IPluginLogger logger, IPersistenceLayer persistence)
     {
@@ -32,13 +32,29 @@ internal class PluginEntry
             return;
         }
 
-        // _logger.Info("ожидаем вход в поток...");
         await _gate.WaitAsync();
-        // _logger.Info("вошли в поток...");
 
         try
         {
-            await _orchestrator.ProcessRequestAsync(parseResult.Data); // check it
+            var result = await _orchestrator.ProcessRequestAsync(parseResult.Data);
+
+            if (!result.IsSuccess)
+            {
+                _logger.Error($"Execution Error: {result.ErrorMessage}");
+                if (!parseResult.Data.Notification) return;
+                _logger.Notify($"Execution Error: {result.ErrorMessage}");
+                return;
+            }
+
+            if (parseResult.Data.Notification)
+                _logger.Notify($"Сообщение успешно отправлено!");
+
+            if (parseResult.Data.DeleteFile &&
+                !string.IsNullOrWhiteSpace(parseResult.Data.MediaPath) &&
+                File.Exists(parseResult.Data.MediaPath))
+            {
+                File.Delete(parseResult.Data.MediaPath!);
+            }
         }
         catch (System.Exception ex)
         {
@@ -47,7 +63,6 @@ internal class PluginEntry
         }
         finally
         {
-            // _logger.Info("вышли из потока...");
             _gate.Release();
         }
     }
