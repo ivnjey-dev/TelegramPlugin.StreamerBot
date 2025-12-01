@@ -7,7 +7,7 @@
         <ImplicitUsings>false</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
-        <Version>1.0.2</Version>
+        <Version>1.0.3</Version>
         <Authors>Ivnjey</Authors>
         <UserSecretsId>31d62534-f9d8-4b1c-80d0-98cdff681e1d</UserSecretsId>
         <SignAssembly>true</SignAssembly>
@@ -17,7 +17,7 @@
 
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.4"/>
-        <PackageReference Include="Telegram.Bot" Version="1.0.5" />
+        <PackageReference Include="Telegram.Bot" Version="1.0.5"/>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="..\TelegramPlugin\**\*.cs" Exclude="..\TelegramPlugin\obj\**;..\TelegramPlugin\bin\**"/>
@@ -31,8 +31,6 @@
         <Reference Include="Streamer.bot.Plugin.Interface">
             <HintPath>..\..\..\StreamerBot\StreamerbotFramework\Streamer.bot.Plugin.Interface.dll</HintPath>
         </Reference>
-        <!--        <Reference Include="Telegram.Bot">-->
-        <!--            <HintPath>..\Telegram.Bot\src\Telegram.Bot\bin\Release\netstandard2.0\Telegram.Bot.dll</HintPath>-->
-        <!--        </Reference>-->
+ 
     </ItemGroup>
 </Project>
