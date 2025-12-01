@@ -78,6 +78,44 @@ namespace TelegramPlugin.Tests.Services
             await Task.WhenAll(task1, task2);
         }
 
+        [Test]
+        public async Task T5_Photo_EmptyPath_FileStream()
+        {
+            var name = "T5_Empty";
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {name}: Waiting for Gate...");
+            await Gate.WaitAsync();
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {name}: Entered Gate.");
+
+            try
+            {
+                var req = new SendRequest
+                {
+                    ChatId = TestChatId,
+                    TopicId = 4,
+                    Text = $"Test {name}",
+                    MediaPath = " "
+                };
+
+                await Gateway.SendAsync(req);
+
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {name}: Success!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {name}: FAILED: {ex.Message}");
+
+                if (ex.ToString().Contains("ObjectDisposedException"))
+                    Assert.Fail($"BUG CAUGHT in {name}: ObjectDisposedException");
+                else
+                    throw;
+            }
+            finally
+            {
+                Gate.Release();
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {name}: Released Gate.");
+            }
+        }
+
 
         private async Task ExecuteAction(string name, bool usePhoto)
         {

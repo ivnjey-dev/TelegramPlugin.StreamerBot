@@ -34,7 +34,7 @@ namespace TelegramPlugin.Tests
             var req1 = new SendRequest
             {
                 ChatId = TestChatId,
-                TopicId = 4,
+                TopicId = TestTopicId,
                 Text = "Msg 1",
                 StateKey = myKey,
                 DeletePrevious = true
@@ -61,7 +61,7 @@ namespace TelegramPlugin.Tests
             {
                 ChatId = TestChatId,
                 Text = "Done",
-                DeleteAllKeys = true 
+                DeleteAllKeys = true
             };
             await _orchestrator.ProcessRequestAsync(req3);
 
@@ -73,9 +73,8 @@ namespace TelegramPlugin.Tests
         [Test]
         public async Task State_IsIsolated_BetweenChats()
         {
-           
             var mockGateway = new MockGatewayForState();
-            var orch = new Orchestrator(mockGateway, _stateManager, _logger); 
+            var orch = new Orchestrator(mockGateway, _stateManager, _logger);
 
             long chatA = -1002106947874;
             long chatB = -1002758981100;
@@ -129,10 +128,11 @@ namespace TelegramPlugin.Tests
     {
         private int _counter = 0;
 
-        public Task<int> SendAsync(SendRequest req)
+        public Task<OperationResult<Response>> SendAsync(SendRequest req)
         {
             _counter += 10;
-            return Task.FromResult(_counter);
+            var response = new Response { MessageId = _counter };
+            return Task.FromResult(OperationResult<Response>.Success(response));
         }
 
         public Task DeleteAsync(long chatId, int messageId)

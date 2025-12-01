@@ -27,9 +27,9 @@ namespace TelegramPlugin.Tests.Services
 
                         TestContext.WriteLine($"[{id}] Sending request...");
 
-                        int msgId = await Gateway.SendAsync(request);
+                        var msgId = await Gateway.SendAsync(request);
 
-                        TestContext.WriteLine($"[{id}] Success! MsgID: {msgId}");
+                        TestContext.WriteLine($"[{id}] Success! MsgID: {msgId.Data.MessageId}");
                     }
                     catch (Exception ex)
                     {
