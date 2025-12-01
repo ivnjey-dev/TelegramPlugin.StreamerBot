@@ -19,6 +19,7 @@ namespace TelegramPlugin.Tests.Services
         protected ITelegramGateway Gateway;
         protected HttpClient HttpClient;
         protected IPluginLogger Logger;
+        protected string TempTestToken;
         protected string TempPhotoPath;
         protected string TempVideoPath;
         protected readonly SemaphoreSlim Gate = new(1, 1);
@@ -28,15 +29,17 @@ namespace TelegramPlugin.Tests.Services
         {
             var builder = new ConfigurationBuilder().AddUserSecrets<BaseGatewayTests>();
             var configuration = builder.Build();
-            HttpClient = new HttpClient();
-            Logger = new TestConsoleLogger();
-            Gateway = new TelegramGateway(TestToken, HttpClient, Logger);
-
+            
             TestToken = configuration["ApiToken"];
             TestChatId = Convert.ToInt64(configuration["ChatId"]);
             TestTopicId = Convert.ToInt32(configuration["TopicId"]);
             TestImagePath = configuration["ImagePath"];
             TestVideoPath = configuration["VideoPath"];
+            
+            HttpClient = new HttpClient();
+            Logger = new TestConsoleLogger();
+            Gateway = new TelegramGateway(TestToken, HttpClient, Logger);
+
 
             if (string.IsNullOrWhiteSpace(TestToken))
                 Assert.Ignore($"Skipping  tests: {TestToken} not found. Please place a real API token.");
