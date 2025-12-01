@@ -32,38 +32,48 @@ internal class PluginEntry
             return;
         }
 
-        await _gate.WaitAsync();
+        var req = parseResult.Data!;
 
+        await _gate.WaitAsync();
         try
         {
-            var result = await _orchestrator.ProcessRequestAsync(parseResult.Data);
+            var result = await _orchestrator.ProcessRequestAsync(req);
 
             if (!result.IsSuccess)
             {
-                _logger.Error($"Execution Error: {result.ErrorMessage}");
-                if (!parseResult.Data.Notification) return;
-                _logger.Notify($"Execution Error: {result.ErrorMessage}");
+                _logger.Error(result.ErrorMessage!);
+                _logger.Notify(result.ErrorMessage!);
                 return;
             }
 
-            if (parseResult.Data.Notification)
-                _logger.Notify($"Сообщение успешно отправлено!");
+            if (req.Notification) _logger.Notify("Сообщение успешно отправлено!");
 
-            if (parseResult.Data.DeleteFile &&
-                !string.IsNullOrWhiteSpace(parseResult.Data.MediaPath) &&
-                File.Exists(parseResult.Data.MediaPath))
+            if (req.DeleteFile && !string.IsNullOrWhiteSpace(req.MediaPath))
             {
-                File.Delete(parseResult.Data.MediaPath!);
+                TryDeleteFile(req.MediaPath!);
             }
         }
         catch (System.Exception ex)
         {
-            _logger.Error($"Execution Error: {ex.Message}");
-            _logger.Notify($"Execution Error: {ex.Message}");
+            _logger.Error($"Critical Error: {ex.Message}");
+            _logger.Notify($"Critical Error: {ex.Message}");
         }
         finally
         {
             _gate.Release();
+        }
+    }
+
+    private void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+
+        catch (System.Exception ex)
+        {
+            _logger.Error($"Warning: Could not delete file '{path}': {ex.Message}");
         }
     }
 }
