@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Telegram.Bot.Types;
 
 namespace TelegramPlugin.Enums
 {
@@ -27,7 +28,7 @@ namespace TelegramPlugin.Models
         }
 
         public static OperationResult<T> Success(T data) => new(true, data, null);
-        public static OperationResult<T?> Failure(string error) => new(false, default(T), error);
+        public static OperationResult<T> Failure(string error) => new(false, default(T), error);
     }
 
     public class SendRequest
@@ -46,6 +47,12 @@ namespace TelegramPlugin.Models
         public bool DeleteAllKeys { get; set; }
         public bool DeleteFile { get; set; }
         public bool Notification { get; set; } = true;
+    }
+
+    public class Response
+    {
+        // public Message Message { get; set; }
+        public int MessageId { get; set; }
     }
 
     public class ButtonDto(string text, string url)

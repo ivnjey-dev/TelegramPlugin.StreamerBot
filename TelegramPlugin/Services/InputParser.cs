@@ -22,7 +22,7 @@ internal class InputParser
     private readonly string _tgMediaType = "tg_media_type";
     private readonly string _tgNotification = "tg_notification";
 
-    public OperationResult<SendRequest?> Parse(IDictionary<string, object> args)
+    public OperationResult<SendRequest> Parse(IDictionary<string, object> args)
     {
         if (!TryGetLong(args, _tgChatId, out long chatId))
         {
@@ -65,7 +65,7 @@ internal class InputParser
             req.Buttons = ApplyLayout(flatButtons, GetString(args, _argLayout));
         }
 
-        return OperationResult<SendRequest>.Success(req)!;
+        return OperationResult<SendRequest>.Success(req);
     }
 
 
@@ -118,14 +118,14 @@ internal class InputParser
         {
             var text = tObj.ToString();
             if (string.IsNullOrWhiteSpace(text))
-                return OperationResult<List<ButtonDto>>.Failure($"Button text at index {i} is empty.")!;
+                return OperationResult<List<ButtonDto>>.Failure($"Button text at index {i} is empty.");
 
             if (!args.TryGetValue($"{_argBtnPrefix}url{i}", out var uObj) || uObj == null)
-                return OperationResult<List<ButtonDto>>.Failure($"Missing URL for button '{text}' (index {i}).")!;
+                return OperationResult<List<ButtonDto>>.Failure($"Missing URL for button '{text}' (index {i}).");
 
             var url = uObj.ToString();
             if (string.IsNullOrWhiteSpace(url))
-                return OperationResult<List<ButtonDto>>.Failure($"URL is empty for button '{text}' (index {i}).")!;
+                return OperationResult<List<ButtonDto>>.Failure($"URL is empty for button '{text}' (index {i}).");
 
             list.Add(new ButtonDto(text, url));
         }

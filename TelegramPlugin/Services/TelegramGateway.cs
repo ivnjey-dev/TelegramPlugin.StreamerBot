@@ -17,47 +17,51 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
 {
     public async Task<OperationResult<Response>> SendAsync(SendRequest req)
     {
-        var bot = new TelegramBotClient(token, httpClient);
-
-        var safeText = req.Text?.SmartEscape() ?? "";
-        var markup = BuildMarkup(req.Buttons);
-
-        var isTextOnly = req.MediaType == MediaType.Text ||
-                         (req.MediaType == MediaType.Auto &&
-                          (string.IsNullOrEmpty(req.MediaPath) || !File.Exists(req.MediaPath)));
-
-        switch (isTextOnly)
+        try
         {
-            case false when !File.Exists(req.MediaPath): //todo сделать тест на пустом и неверном пути.
-                return OperationResult<Response>.Failure("File not exists")!;
-            case true:
-            {
-                var msg = await bot.SendMessage(req.ChatId, safeText, ParseMode.Markdown, replyMarkup: markup,
-                    messageThreadId: req.TopicId);
-                return OperationResult<Response>.Success(new Response { Message = msg });
-            }
-        }
+            var bot = new TelegramBotClient(token, httpClient);
+            var safeText = req.Text?.SmartEscape() ?? "";
+            var markup = BuildMarkup(req.Buttons);
 
-        // var fileBytes = File.ReadAllBytes(req.MediaPath!);
-        // var fileName = Path.GetFileName(req.MediaPath);
-        // var file = InputFile.FromStream(new MemoryStream(fileBytes), fileName);
-        // Медиа
+            var isTextOnly = req.MediaType == MediaType.Text ||
+                             (req.MediaType == MediaType.Auto &&
+                              (string.IsNullOrEmpty(req.MediaPath) || !File.Exists(req.MediaPath)));
+            //todo сделать тест на пустом и неверном пути.
+            if (!isTextOnly && !File.Exists(req.MediaPath))
+                return OperationResult<Response>.Failure("[ERROR] File not found");
+            var msgId = isTextOnly
+                ? (await bot.SendMessage(req.ChatId, safeText, ParseMode.Markdown, replyMarkup: markup,
+                    messageThreadId: req.TopicId)).MessageId
+                : await SendMediaAsync(bot, req, safeText, markup);
+            //todo определить неудачная отправка всегда вызовет исключения
+            //или же мы получим просто какой то ответ
+
+            return OperationResult<Response>.Success(new Response { MessageId = msgId });
+        }
+        catch (Telegram.Bot.Exceptions.ApiRequestException ex)
+        {
+            logger.Error($"Telegram API Error {ex.ErrorCode}: {ex.Message}");
+            return OperationResult<Response>.Failure($"Telegram API error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            logger.Error($"Gateway error: {ex.Message}");
+            return OperationResult<Response>.Failure($"Error: {ex.Message}");
+        }
+    }
+
+    private async Task<int> SendMediaAsync(ITelegramBotClient bot, SendRequest req, string caption, InlineKeyboardMarkup? markup)
+    {
         using var stream = File.OpenRead(req.MediaPath!);
         var file = new Telegram.Bot.Types.InputFileStream(stream, Path.GetFileName(req.MediaPath));
 
-        Telegram.Bot.Types.Message mediaMsg;
-        if (req.MediaType == MediaType.Photo)
-        {
-            mediaMsg = await bot.SendPhoto(req.ChatId, file, caption: safeText, parseMode: ParseMode.Markdown,
-                replyMarkup: markup, messageThreadId: req.TopicId);
-        }
-        else
-        {
-            mediaMsg = await bot.SendVideo(req.ChatId, file, caption: safeText, parseMode: ParseMode.Markdown,
+        var msg = req.MediaType == MediaType.Photo
+            ? await bot.SendPhoto(req.ChatId, file, caption: caption, parseMode: ParseMode.Markdown,
+                replyMarkup: markup, messageThreadId: req.TopicId)
+            : await bot.SendVideo(req.ChatId, file, caption: caption, parseMode: ParseMode.Markdown,
                 replyMarkup: markup, messageThreadId: req.TopicId, supportsStreaming: true);
-        }
 
-        return OperationResult<Response>.Success(new Response { Message = mediaMsg });
+        return msg.MessageId;
     }
 
     public async Task DeleteAsync(long chatId, int messageId)
@@ -69,14 +73,11 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
         }
         catch (Exception ex)
         {
-            logger.Error(ex.Message);
-            // logger.Notify(ex.Message); // оверхед, будет логировать попытку удаления уже удаленных
+            logger.Error($"Delete error: {ex.Message}");
         }
     }
 
-
-    private InlineKeyboardMarkup? BuildMarkup(
-        List<List<ButtonDto>>? buttons)
+    private InlineKeyboardMarkup? BuildMarkup(List<List<ButtonDto>>? buttons)
     {
         if (buttons == null || !buttons.Any()) return null;
         var rows = buttons.Select(row => row.Select(b => InlineKeyboardButton.WithUrl(b.Text, b.Url)).ToList())
