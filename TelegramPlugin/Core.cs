@@ -10,11 +10,11 @@ namespace TelegramPlugin;
 internal class PluginEntry
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private readonly Orchestrator _orchestrator;
+    private readonly IOrchestrator _orchestrator;
     private readonly InputParser _parser;
     private readonly IPluginLogger _logger;
 
-    public PluginEntry(Orchestrator orchestrator, InputParser parser, IPluginLogger logger)
+    public PluginEntry(IOrchestrator orchestrator, InputParser parser, IPluginLogger logger)
     {
         _orchestrator = orchestrator;
         _parser = parser;

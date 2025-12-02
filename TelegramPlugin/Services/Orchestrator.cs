@@ -3,7 +3,7 @@ using TelegramPlugin.Models;
 
 namespace TelegramPlugin.Services;
 
-internal class Orchestrator(ITelegramGateway gateway, StateManager stateManager, IPluginLogger logger)
+internal class Orchestrator(ITelegramGateway gateway, StateManager stateManager, IPluginLogger logger) : IOrchestrator
 {
     public async Task<OperationResult<Response>> ProcessRequestAsync(SendRequest req)
     {
