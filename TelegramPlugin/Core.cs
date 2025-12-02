@@ -10,16 +10,15 @@ namespace TelegramPlugin;
 internal class PluginEntry
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private readonly InputParser _parser = new();
     private readonly Orchestrator _orchestrator;
+    private readonly InputParser _parser;
     private readonly IPluginLogger _logger;
 
-    public PluginEntry(string token, HttpClient sharedClient, IPluginLogger logger, IPersistenceLayer persistence)
+    public PluginEntry(Orchestrator orchestrator, InputParser parser, IPluginLogger logger)
     {
+        _orchestrator = orchestrator;
+        _parser = parser;
         _logger = logger;
-        var stateManager = new StateManager(persistence);
-        var gateway = new TelegramGateway(token, sharedClient, logger);
-        _orchestrator = new Orchestrator(gateway, stateManager, logger);
     }
 
     public async Task ExecuteAsync(Dictionary<string, object> args)
