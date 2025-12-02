@@ -24,7 +24,6 @@ internal class Orchestrator(ITelegramGateway gateway, StateManager stateManager,
             }
         }
 
-
         var sendResult = await gateway.SendAsync(req);
 
         if (!sendResult.IsSuccess)

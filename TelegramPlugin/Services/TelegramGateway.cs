@@ -32,9 +32,7 @@ internal class TelegramGateway(string token, HttpClient httpClient, IPluginLogge
                 ? (await bot.SendMessage(req.ChatId, safeText, ParseMode.Markdown, replyMarkup: markup,
                     messageThreadId: req.TopicId)).MessageId
                 : await SendMediaAsync(bot, req, safeText, markup);
-            //todo определить неудачная отправка всегда вызовет исключения?
-            //или же мы получим просто какой то ответ
-
+            
             return OperationResult<Response>.Success(new Response { MessageId = msgId });
         }
         catch (Telegram.Bot.Exceptions.ApiRequestException ex)

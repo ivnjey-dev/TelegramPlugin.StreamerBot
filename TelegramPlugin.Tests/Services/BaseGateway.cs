@@ -37,8 +37,7 @@ namespace TelegramPlugin.Tests.Services
             
             HttpClient = new HttpClient();
             Logger = new TestConsoleLogger();
-            Gateway = new TelegramGateway(TestToken, HttpClient, Logger);
-
+            Gateway = new TelegramGateway(TestToken!, HttpClient, Logger);
 
             if (string.IsNullOrWhiteSpace(TestToken))
                 Assert.Ignore($"Skipping  tests: {TestToken} not found. Please place a real API token.");
