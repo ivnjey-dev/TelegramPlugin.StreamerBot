@@ -8,11 +8,10 @@ namespace TelegramPlugin.Services;
 
 internal class InputParser
 {
-    // todo переименовать префиксы и переменные
     private readonly string _argBtnPrefix = "tg_btn_";
     private readonly string _argLayout = "tg_layout";
-    private readonly string _tgChatId = "tg_chatId";
-    private readonly string _tgTopicId = "tg_topicId";
+    private readonly string _tgChatId = "tg_chat_id";
+    private readonly string _tgTopicId = "tg_topic_id";
     private readonly string _tgText = "tg_text";
     private readonly string _tgStateKey = "tg_state_key";
     private readonly string _tgDeletePrevious = "tg_delete_prev";
@@ -22,8 +21,9 @@ internal class InputParser
     private readonly string _tgMediaType = "tg_media_type";
     private readonly string _tgNotification = "tg_notification";
 
-    public OperationResult<SendRequest> Parse(IDictionary<string, object> args)
+    public OperationResult<SendRequest> Parse(IDictionary<string, object> rawArgs)
     {
+        var args = new Dictionary<string, object>(rawArgs, StringComparer.OrdinalIgnoreCase);
         if (!TryGetLong(args, _tgChatId, out long chatId))
         {
             return OperationResult<SendRequest>.Failure($"{_tgChatId} is missing or invalid.");
@@ -123,7 +123,7 @@ internal class InputParser
             if (!args.TryGetValue($"{_argBtnPrefix}url{i}", out var uObj) || uObj == null)
                 return OperationResult<List<ButtonDto>>.Failure($"Missing URL for button '{text}' (index {i}).");
 
-            var url = uObj.ToString();
+            var url = uObj.ToString().Trim();
             if (string.IsNullOrWhiteSpace(url))
                 return OperationResult<List<ButtonDto>>.Failure($"URL is empty for button '{text}' (index {i}).");
 
