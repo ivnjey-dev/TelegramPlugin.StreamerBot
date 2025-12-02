@@ -1,9 +1,8 @@
 using NUnit.Framework;
-using TelegramPlugin.Models;
 using TelegramPlugin.Enums;
-using TelegramPlugin.Tests.Services;
+using TelegramPlugin.Models;
 
-namespace TelegramPlugin.Tests
+namespace TelegramPlugin.Tests.Services
 {
     [TestFixture]
     [Explicit("Requires real Telegram Token & Network")]
@@ -172,6 +171,19 @@ namespace TelegramPlugin.Tests
 
             Assert.That(result.IsSuccess, Is.True);
         }
+        [Test]
+        public async Task Send_WrongButton_Failure()
+        {
+            var req = CreateRequest("Wrong Buttons");
+            req.Buttons = new List<List<ButtonDto>>
+            {
+                new List<ButtonDto> { new ButtonDto("Click Me", "google.com ") }
+            };
+
+            var result = await Gateway.SendAsync(req);
+
+            Assert.That(result.IsSuccess, Is.False);
+        }
 
         [Test]
         public async Task Send_EmptyText_ShouldFailOrThrow()
@@ -215,7 +227,7 @@ namespace TelegramPlugin.Tests
             var req = new SendRequest
             {
                 ChatId = TestChatId,
-                Text = new string('a', 5000) // Слишком длинный текст
+                Text = new string('a', 5000)
             };
 
             var result = await Gateway.SendAsync(req);

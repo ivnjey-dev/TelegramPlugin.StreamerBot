@@ -5,24 +5,239 @@ using TelegramPlugin.Enums;
 namespace TelegramPlugin.Tests.Services
 {
     [TestFixture]
-    public class InputParserTests
+    public class InputParseTests
     {
         private InputParser _parser;
+        private string _tempImage;
+        private string _tempVideo;
 
         [SetUp]
         public void Setup()
         {
             _parser = new InputParser();
+            _tempImage = Path.GetTempFileName() + ".jpg";
+            File.WriteAllText(_tempImage, "fake image data");
+            
+            _tempVideo = Path.GetTempFileName() + ".mp4";
+            File.WriteAllText(_tempVideo, "fake video data");
         }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (File.Exists(_tempImage)) File.Delete(_tempImage);
+            if (File.Exists(_tempVideo)) File.Delete(_tempVideo);
+        }
+        
 
         [Test]
         public void Parse_MissingChatId_ReturnsFailure()
         {
             var args = new Dictionary<string, object>();
             var result = _parser.Parse(args);
+        
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.ErrorMessage, Does.Contain("tg_chat_id"));
+        }
+        [Test]
+        public void Parse_Missing_ChatId_ReturnsFailure()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_text", "Hello" }
+            };
+        
+            var result = _parser.Parse(args);
+        
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.ErrorMessage, Contains.Substring("tg_chat_id is missing"));
+        }
+
+        [Test]
+        public void Parse_InvalidChatId_ReturnsFailure()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_chat_id", "not-a-number" }
+            };
+
+            var result = _parser.Parse(args);
 
             Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("tg_chatId"));
+        }
+
+        [Test]
+        public void Parse_ValidChatId_Types()
+        {
+            var res1 = _parser.Parse(new Dictionary<string, object> { { "tg_chat_id", "-100123" } });
+            Assert.That(res1.IsSuccess, Is.True);
+            Assert.That(res1.Data.ChatId, Is.EqualTo(-100123));
+
+            var res2 = _parser.Parse(new Dictionary<string, object> { { "tg_chat_id", -100123L } });
+            Assert.That(res2.IsSuccess, Is.True);
+            Assert.That(res2.Data.ChatId, Is.EqualTo(-100123));
+            
+            var res3 = _parser.Parse(new Dictionary<string, object> { { "tg_chat_id", -100123.0 } });
+            Assert.That(res3.IsSuccess, Is.True); 
+        }
+
+
+        [Test]
+        public void Parse_CaseInsensitiveKeys_Works()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "TG_CHAT_ID", "12345" },
+                { "Tg_TeXt", "Hello" }
+            };
+
+            var result = _parser.Parse(args);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data.ChatId, Is.EqualTo(12345));
+            Assert.That(result.Data.Text, Is.EqualTo("Hello"));
+        }
+
+
+        [Test]
+        public void Parse_Media_ExplicitPhoto_FileNotFound_ReturnsFailure()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_chat_id", "123" },
+                { "tg_media_type", "photo" },
+                { "tg_media_path", "non_existent.jpg" }
+            };
+
+            var result = _parser.Parse(args);
+
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.ErrorMessage, Contains.Substring("file is missing"));
+        }
+
+        [Test]
+        public void Parse_Media_AutoDetect_Photo()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_chat_id", "123" },
+                { "tg_media_path", _tempImage }
+            };
+
+            var result = _parser.Parse(args);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data.MediaType, Is.EqualTo(MediaType.Photo));
+        }
+        
+        [Test]
+        public void Parse_Media_AutoDetect_Video()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_chat_id", "123" },
+                { "tg_media_path", _tempVideo } 
+            };
+
+            var result = _parser.Parse(args);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data.MediaType, Is.EqualTo(MediaType.Video));
+        }
+
+        [Test]
+        public void Parse_Media_WrongExtension_ReturnsFailure()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_chat_id", "123" },
+                { "tg_media_type", "photo" },
+                { "tg_media_path", _tempVideo } 
+            };
+
+            var result = _parser.Parse(args);
+
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.ErrorMessage, Contains.Substring("extension is not an image"));
+        }
+
+
+        [Test]
+        public void Parse_Buttons_Valid()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_chat_id", "123" },
+                { "tg_btn_text0", "Google" }, { "tg_btn_url0", "https://google.com" },
+                { "tg_btn_text1", "Yandex" }, { "tg_btn_url1", "https://ya.ru" }
+            };
+
+            var result = _parser.Parse(args);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data.Buttons, Is.Not.Null);
+            Assert.That(result.Data.Buttons.Count, Is.EqualTo(1)); 
+            Assert.That(result.Data.Buttons[0].Count, Is.EqualTo(2));
+            Assert.That(result.Data.Buttons[0][0].Text, Is.EqualTo("Google"));
+            Assert.That(result.Data.Buttons[0][1].Text, Is.EqualTo("Yandex")); 
+        }
+
+        [Test]
+        public void Parse_Buttons_MissingUrl_ReturnsFailure()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_chat_ID", "123" },
+                { "tg_btn_text0", "Google" }
+            };
+
+            var result = _parser.Parse(args);
+
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.ErrorMessage, Contains.Substring("Missing URL"));
+        }
+
+        [Test]
+        public void Parse_Buttons_Layout()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_chat_id", "123" },
+                { "tg_btn_text0", "1" }, { "tg_btn_url0", "u" },
+                { "tg_btn_text1", "2" }, { "tg_btn_url1", "u" },
+                { "tg_btn_text2", "3" }, { "tg_btn_url2", "u" },
+                { "tg_layout", "2, 1" } 
+            };
+
+            var result = _parser.Parse(args);
+
+            Assert.That(result.IsSuccess, Is.True);
+            var rows = result.Data.Buttons;
+            
+            Assert.That(rows.Count, Is.EqualTo(2)); 
+            Assert.That(rows[0].Count, Is.EqualTo(2));
+            Assert.That(rows[1].Count, Is.EqualTo(1));
+        }
+        
+        // === BOOLEANS & NUMBERS ===
+        
+        [Test]
+        public void Parse_Booleans_And_Ints()
+        {
+            var args = new Dictionary<string, object>
+            {
+                { "tg_chat_Id", "123" },
+                { "tg_topic_ID", "42" },
+                { "tg_delete_file", "True" }, // String bool
+                { "tg_notification", true }   // Native bool
+            };
+
+            var result = _parser.Parse(args);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data.TopicId, Is.EqualTo(42));
+            Assert.That(result.Data.DeleteFile, Is.True);
+            Assert.That(result.Data.Notification, Is.True);
         }
 
         [Test]
@@ -30,7 +245,7 @@ namespace TelegramPlugin.Tests.Services
         {
             var args = new Dictionary<string, object>
             {
-                { "tg_chatId", "-100123" },
+                { "tg_chat_id", "-100123" },
                 { "tg_text", "Test" }
             };
             var result = _parser.Parse(args);
@@ -45,7 +260,7 @@ namespace TelegramPlugin.Tests.Services
         {
             var args = new Dictionary<string, object>
             {
-                { "tg_chatId", 123 },
+                { "tg_chat_id", 123 },
                 { "tg_btn_text0", "Zero" }, { "tg_btn_url0", "u0" },
                 { "tg_btn_text1", "One" }, { "tg_btn_url1", "u1" },
                 // 3 - игнорируется? так как 2 пропущен
@@ -53,7 +268,7 @@ namespace TelegramPlugin.Tests.Services
             };
 
             var result = _parser.Parse(args);
-            var buttons = result.Data.Buttons; // List<List<ButtonDto>>
+            var buttons = result.Data.Buttons; 
 
             Assert.That(buttons.Count, Is.EqualTo(1));
             Assert.That(buttons[0].Count, Is.EqualTo(2)); 
@@ -66,7 +281,7 @@ namespace TelegramPlugin.Tests.Services
         {
             var args = new Dictionary<string, object>
             {
-                { "tg_chatId", 123 },
+                { "tg_chat_id", 123 },
                 { "tg_btn_text0", "BtnWithoutUrl" }
             };
 
@@ -81,11 +296,11 @@ namespace TelegramPlugin.Tests.Services
         {
             var args = new Dictionary<string, object>
             {
-                { "tg_chatId", 123 },
+                { "tg_chat_id", 123 },
                 { "tg_btn_text0", "A" }, { "tg_btn_url0", "u" },
                 { "tg_btn_text1", "B" }, { "tg_btn_url1", "u" },
                 { "tg_btn_text2", "C" }, { "tg_btn_url2", "u" },
-                { "tg_layout", "2, 1" } // 2 в первой, 1 во второй
+                { "tg_layout", "2, 1" } 
             };
 
             var result = _parser.Parse(args);
@@ -103,7 +318,7 @@ namespace TelegramPlugin.Tests.Services
         {
             var args = new Dictionary<string, object>
             {
-                { "tg_chatId", 123 },
+                { "tg_chat_Id", 123 },
                 { "tg_media_type", "photo" },
                 { "tg_media_path", "non_existent.jpg" }
             };
@@ -119,7 +334,7 @@ namespace TelegramPlugin.Tests.Services
         {
             var args = new Dictionary<string, object>
             {
-                { "tg_chatId", 123 },
+                { "tg_chat_id", 123 },
                 { "tg_media_type", "auto" },
                 { "tg_media_path", "non_existent.jpg" }
             };
