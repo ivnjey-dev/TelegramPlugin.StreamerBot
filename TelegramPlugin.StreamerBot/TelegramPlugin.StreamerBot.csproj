@@ -7,7 +7,7 @@
         <ImplicitUsings>false</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
-        <Version>1.0.3</Version>
+        <Version>1.0.4</Version>
         <Authors>Ivnjey</Authors>
         <UserSecretsId>31d62534-f9d8-4b1c-80d0-98cdff681e1d</UserSecretsId>
         <SignAssembly>true</SignAssembly>
