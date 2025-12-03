@@ -1,64 +1,56 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace TelegramPlugin.Services;
 
 internal class StateManager(IPersistenceLayer store)
 {
-    private Dictionary<string, int> LoadState()
-    {
-        var data = store.Get();
-        return data ?? new Dictionary<string, int>();
-    }
+    private readonly ConcurrentDictionary<string, int> _cache = store.Get() ?? new ConcurrentDictionary<string, int>();
+    private readonly object _cacheLock = new();
 
-    private void SaveState(Dictionary<string, int> state)
+    private void SaveState()
     {
-        store.Set(state);
+        lock (_cacheLock)
+        {
+            store.Set(_cache);
+        }
     }
 
     private string BuildCompositeKey(long chatId, int? topicId, string userKey) =>
         $"{chatId}:{topicId ?? 0}:{userKey}";
 
-    public int? GetMessageId(long chatId, int? topicId, string userKey)
-    {
-        var state = LoadState();
-        var compositeKey = BuildCompositeKey(chatId, topicId, userKey);
-
-        return state.TryGetValue(compositeKey, out int id) ? id : null;
-    }
+    public int? GetMessageId(long chatId, int? topicId, string userKey) =>
+        _cache.TryGetValue(BuildCompositeKey(chatId, topicId, userKey), out int id) ? id : null;
 
     public void SetMessageId(long chatId, int? topicId, string userKey, int messageId)
     {
-        var state = LoadState();
         var compositeKey = BuildCompositeKey(chatId, topicId, userKey);
-
-        state[compositeKey] = messageId;
-        SaveState(state);
+        _cache[compositeKey] = messageId;
+        SaveState();
     }
 
     public void RemoveMessageId(long chatId, int? topicId, string userKey)
     {
-        var state = LoadState();
         var compositeKey = BuildCompositeKey(chatId, topicId, userKey);
 
-        if (state.Remove(compositeKey))
+        if (_cache.TryRemove(compositeKey, out _))
         {
-            SaveState(state);
+            SaveState();
         }
     }
 
     // todo по идее это куда то надо присобачить
-    public void ClearAll()
-    {
-        store.Set(new Dictionary<string, int>());
-    }
+    // public void ClearAll()
+    // {
+    //     store.Set(new ConcurrentDictionary<string, int>());
+    // }
 
     public Dictionary<string, int> GetAllForChat(long chatId)
     {
-        var state = LoadState();
         var result = new Dictionary<string, int>();
         var prefix = $"{chatId}:";
 
-        foreach (var kvp in state)
+        foreach (var kvp in _cache)
         {
             if (kvp.Key.StartsWith(prefix))
             {
@@ -71,19 +63,18 @@ internal class StateManager(IPersistenceLayer store)
 
     public void ClearForChat(long chatId)
     {
-        var state = LoadState();
         var prefix = $"{chatId}:";
 
         var keysToRemove = new List<string>();
-        foreach (var key in state.Keys)
+        foreach (var key in _cache.Keys)
         {
             if (key.StartsWith(prefix)) keysToRemove.Add(key);
         }
 
         if (keysToRemove.Count > 0)
         {
-            foreach (var key in keysToRemove) state.Remove(key);
-            SaveState(state);
+            foreach (var key in keysToRemove) _cache.TryRemove(key, out _);
+            SaveState();
         }
     }
 }

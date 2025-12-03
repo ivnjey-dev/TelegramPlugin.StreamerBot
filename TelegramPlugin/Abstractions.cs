@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using TelegramPlugin.Models;
 
@@ -16,8 +16,8 @@ public interface IOrchestrator
 
 public interface IPersistenceLayer
 {
-    Dictionary<string, int>? Get();
-    void Set(Dictionary<string, int> value);
+    ConcurrentDictionary<string, int>? Get();
+    void Set(ConcurrentDictionary<string, int> value);
 }
 
 public interface IPluginLogger
