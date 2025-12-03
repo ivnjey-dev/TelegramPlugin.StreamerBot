@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
@@ -7,7 +8,7 @@ namespace TelegramPlugin.Tests.Infrastructure
 {
     public class TestFilePersistence : IPersistenceLayer
     {
-        private readonly string _key = "TestTelegramPlugin.Key";
+        // private readonly string _key = "TestTelegramPlugin.Key";
         private readonly string _filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "test_state.json");
 
         public T Get<T>(string key)
@@ -47,14 +48,15 @@ namespace TelegramPlugin.Tests.Infrastructure
             if (File.Exists(_filePath)) File.Delete(_filePath);
         }
 
-        public Dictionary<string, int> Get()
+        public ConcurrentDictionary<string, int> Get()
         {
-            if (!File.Exists(_filePath)) return new Dictionary<string, int>();
+            if (!File.Exists(_filePath)) return new ConcurrentDictionary<string, int>();
             var json = File.ReadAllText(_filePath);
-            return JsonConvert.DeserializeObject<Dictionary<string, int>>(json);
+            return JsonConvert.DeserializeObject<ConcurrentDictionary<string, int>>(json);
         }
 
-        public void Set(Dictionary<string, int> value)
+
+        public void Set(ConcurrentDictionary<string, int> value)
         {
             File.WriteAllText(_filePath, JsonConvert.SerializeObject(value, Formatting.Indented));
         }

@@ -1,11 +1,9 @@
-using System.Threading.Tasks;
 using NUnit.Framework;
 using TelegramPlugin.Models;
 using TelegramPlugin.Services;
 using TelegramPlugin.Tests.Infrastructure;
-using TelegramPlugin.Tests.Services;
 
-namespace TelegramPlugin.Tests
+namespace TelegramPlugin.Tests.Services
 {
     [TestFixture]
     public class OrchestratorTests : BaseGatewayTests

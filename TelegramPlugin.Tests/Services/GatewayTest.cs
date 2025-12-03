@@ -145,6 +145,20 @@ namespace TelegramPlugin.Tests.Services
 
             Assert.That(result.IsSuccess, Is.True);
         }
+        [Test]
+        public async Task Send_VideoWithButton_Success()
+        {
+            var req = CreateRequest("Watch this video", MediaType.Video);
+            req.MediaPath = TempVideoPath;
+            req.Buttons = new List<List<ButtonDto>>
+            {
+                new List<ButtonDto> { new ButtonDto("Click Me", "https://t.me") }
+            };
+
+            var result = await Gateway.SendAsync(req);
+
+            Assert.That(result.IsSuccess, Is.True);
+        }
 
         [Test]
         public async Task Send_Photo_NoCaption_Success()

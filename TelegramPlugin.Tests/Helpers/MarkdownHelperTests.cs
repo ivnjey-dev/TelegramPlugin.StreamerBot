@@ -1,11 +1,9 @@
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using TelegramPlugin.Extensions;
 
 // Подключи namespace своего хелпера
 
-namespace TelegramPlugin.Tests
+namespace TelegramPlugin.Tests.Helpers
 {
     [TestFixture]
     public class MarkdownHelperTests

@@ -63,7 +63,7 @@ namespace TelegramPlugin.Tests.Services
 
             Assert.That(_orchestrator.CallCount, Is.EqualTo(1));
             Assert.That(_logger.Notifications.Count, Is.EqualTo(1));
-            Assert.That(_logger.Notifications[0], Contains.Substring("успешно"));
+            Assert.That(_logger.Notifications[0], Contains.Substring("successfully"));
             Assert.That(_logger.Errors, Is.Empty);
         }
         
