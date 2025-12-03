@@ -24,6 +24,6 @@ public class ProxyPersistence(IInlineInvokeProxy cph, string key, IPluginLogger 
 
     public void Set(Dictionary<string, int> value)
     {
-        cph.SetGlobalVar(key, JsonConvert.SerializeObject(value));
+        cph.SetGlobalVar(key, JsonConvert.SerializeObject(value, Formatting.Indented));
     }
 }

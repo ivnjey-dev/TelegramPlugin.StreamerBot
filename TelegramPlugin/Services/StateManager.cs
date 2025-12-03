@@ -15,15 +15,11 @@ internal class StateManager(IPersistenceLayer store)
         store.Set(state);
     }
 
-    private string BuildCompositeKey(long chatId, int? topicId, string userKey)
-    {
-        return $"{chatId}:{topicId ?? 0}:{userKey}";
-    }
+    private string BuildCompositeKey(long chatId, int? topicId, string userKey) =>
+        $"{chatId}:{topicId ?? 0}:{userKey}";
 
     public int? GetMessageId(long chatId, int? topicId, string userKey)
     {
-        if (string.IsNullOrEmpty(userKey)) return null;
-
         var state = LoadState();
         var compositeKey = BuildCompositeKey(chatId, topicId, userKey);
 
@@ -32,8 +28,6 @@ internal class StateManager(IPersistenceLayer store)
 
     public void SetMessageId(long chatId, int? topicId, string userKey, int messageId)
     {
-        if (string.IsNullOrEmpty(userKey)) return;
-
         var state = LoadState();
         var compositeKey = BuildCompositeKey(chatId, topicId, userKey);
 
@@ -43,8 +37,6 @@ internal class StateManager(IPersistenceLayer store)
 
     public void RemoveMessageId(long chatId, int? topicId, string userKey)
     {
-        if (string.IsNullOrEmpty(userKey)) return;
-
         var state = LoadState();
         var compositeKey = BuildCompositeKey(chatId, topicId, userKey);
 

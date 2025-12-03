@@ -12,15 +12,15 @@ public class PluginMain
     private readonly HttpClient _sharedClient;
     private readonly ConcurrentDictionary<string, Lazy<PluginEntry>> _bots = new();
     private readonly IPluginLogger _logger;
-    private readonly IPersistenceLayer _persistence;
     private readonly InputParser _parser;
+    private readonly StateManager _stateManager;
 
     public PluginMain(IInlineInvokeProxy cph)
     {
         _sharedClient = new HttpClient();
         _logger = new Logger(cph, "Telegram Plugin Sender");
-        _persistence = new ProxyPersistence(cph, "TelegramPlugin.StateManager", _logger);
         _parser = new InputParser();
+        _stateManager = new StateManager(new ProxyPersistence(cph, "TelegramPlugin.StateManager", _logger));
     }
 
     public bool Send(Dictionary<string, object> args)
@@ -38,9 +38,8 @@ public class PluginMain
         var entry = _bots.GetOrAdd(token, t => new Lazy<PluginEntry>(() =>
         {
             _logger.Info($"Initializing Core for bot token ending in ...{t[Math.Max(0, t.Length - 4)..]}");
-            var stateManager = new StateManager(_persistence);
             var gateway = new TelegramGateway(t, _sharedClient, _logger);
-            var orchestrator = new Orchestrator(gateway, stateManager, _logger);
+            var orchestrator = new Orchestrator(gateway, _stateManager, _logger);
             return new PluginEntry(orchestrator, _parser, _logger);
         })).Value;
 

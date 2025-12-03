@@ -45,7 +45,7 @@ internal class PluginEntry
                 return;
             }
 
-            if (req.Notification) _logger.Notify("Сообщение успешно отправлено!");
+            if (req.Notification) _logger.Notify("Message sent successfully!");
 
             if (req.DeleteFile && !string.IsNullOrWhiteSpace(req.MediaPath))
             {

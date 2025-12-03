@@ -14,7 +14,7 @@ internal class Orchestrator(ITelegramGateway gateway, StateManager stateManager,
             stateManager.ClearForChat(req.ChatId);
             logger.Info("All previous messages deleted.");
         }
-        else if (req.DeletePrevious && !string.IsNullOrEmpty(req.StateKey))
+        else if (req.DeletePrevious && !string.IsNullOrWhiteSpace(req.StateKey))
         {
             var oldId = stateManager.GetMessageId(req.ChatId, req.TopicId, req.StateKey!);
             if (oldId.HasValue)
