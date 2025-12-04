@@ -7,7 +7,9 @@ namespace TelegramPlugin.Enums
         Auto,
         Text,
         Photo,
-        Video
+        Video,
+        PhotoUrl,
+        VideoUrl
     }
 }
 
@@ -30,22 +32,29 @@ namespace TelegramPlugin.Models
         public static OperationResult<T> Failure(string error) => new(false, default(T), error);
     }
 
-    public class SendRequest
+    public class BaseRequest
     {
         public long ChatId { get; set; }
         public int? TopicId { get; set; }
+        public string? StateKey { get; set; }
+        public bool DeleteAllKeys { get; set; }
+    }
+
+    public class SendRequest : BaseRequest
+    {
         public string? Text { get; set; }
         public string? MediaPath { get; set; }
         public Enums.MediaType MediaType { get; set; }
 
         public List<List<ButtonDto>> Buttons { get; set; } = [];
 
-        // Управление состоянием
-        public string? StateKey { get; set; }
         public bool DeletePrevious { get; set; }
-        public bool DeleteAllKeys { get; set; }
         public bool DeleteFile { get; set; }
         public bool Notification { get; set; } = true;
+    }
+
+    public class DeleteRequest : BaseRequest
+    {
     }
 
     public class Response

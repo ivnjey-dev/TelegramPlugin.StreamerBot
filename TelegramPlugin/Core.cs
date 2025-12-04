@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using TelegramPlugin.Services;
@@ -21,9 +21,9 @@ internal class PluginEntry
         _logger = logger;
     }
 
-    public async Task ExecuteAsync(Dictionary<string, object> args)
+    public async Task ExecuteSendAsync(Dictionary<string, object> args)
     {
-        var parseResult = _parser.Parse(args);
+        var parseResult = _parser.ParseSend(args);
         if (!parseResult.IsSuccess)
         {
             _logger.Error($"Config Error: {parseResult.ErrorMessage}");
@@ -32,11 +32,9 @@ internal class PluginEntry
         }
 
         var req = parseResult.Data;
-
-        await _gate.WaitAsync();
-        try
+        await ExecuteRequestAsync(async () =>
         {
-            var result = await _orchestrator.ProcessRequestAsync(req);
+            var result = await _orchestrator.ProcessSendRequestAsync(req);
 
             if (!result.IsSuccess)
             {
@@ -46,13 +44,33 @@ internal class PluginEntry
             }
 
             if (req.Notification) _logger.Notify("Message sent successfully!");
-
             if (req.DeleteFile && !string.IsNullOrWhiteSpace(req.MediaPath))
-            {
                 TryDeleteFile(req.MediaPath!);
-            }
+        });
+    }
+
+    public async Task ExecuteDeleteAsync(Dictionary<string, object> args)
+    {
+        var delReq = _parser.ParseDelete(args);
+        if (!delReq.IsSuccess)
+        {
+            _logger.Error($"Config Error: {delReq.ErrorMessage}");
+            _logger.Notify($"Config Error: {delReq.ErrorMessage}");
+            return;
         }
-        catch (System.Exception ex)
+
+        var req = delReq.Data;
+        await ExecuteRequestAsync(async () => await _orchestrator.ProcessDeleteRequestAsync(req));
+    }
+
+    private async Task ExecuteRequestAsync(Func<Task> callback)
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            await callback();
+        }
+        catch (Exception ex)
         {
             _logger.Error($"Critical Error: {ex.Message}");
             _logger.Notify($"Critical Error: {ex.Message}");
@@ -70,7 +88,7 @@ internal class PluginEntry
             if (File.Exists(path)) File.Delete(path);
         }
 
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             _logger.Error($"Warning: Could not delete file '{path}': {ex.Message}");
         }

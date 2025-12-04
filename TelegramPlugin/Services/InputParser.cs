@@ -21,7 +21,7 @@ internal class InputParser
     private readonly string _tgMediaType = "tg_media_type";
     private readonly string _tgNotification = "tg_notification";
 
-    public OperationResult<SendRequest> Parse(IDictionary<string, object> rawArgs)
+    public OperationResult<SendRequest> ParseSend(IDictionary<string, object> rawArgs)
     {
         var args = new Dictionary<string, object>(rawArgs, StringComparer.OrdinalIgnoreCase);
         if (!TryGetLong(args, _tgChatId, out long chatId))
@@ -51,7 +51,6 @@ internal class InputParser
 
         req.MediaType = mediaResult.Data;
         req.MediaPath = GetString(args, _tgMediaPath);
-        // todo добавить key для принудительного удаления поста по ключу из другой группы.
         var buttonsResult = CollectButtons(args);
         if (!buttonsResult.IsSuccess)
         {
@@ -68,6 +67,26 @@ internal class InputParser
         return OperationResult<SendRequest>.Success(req);
     }
 
+    public OperationResult<DeleteRequest> ParseDelete(IDictionary<string, object> rawArgs)
+    {
+        var args = new Dictionary<string, object>(rawArgs, StringComparer.OrdinalIgnoreCase);
+        if (!TryGetLong(args, _tgChatId, out long chatId))
+        {
+            return OperationResult<DeleteRequest>.Failure("tg_chat_id is missing or invalid.");
+        }
+
+        var state = GetString(args, _tgStateKey);
+        var deleteAllKeys = GetBool(args, _tgDeleteAllKeys);
+        if (string.IsNullOrWhiteSpace(state) && !deleteAllKeys)
+            return OperationResult<DeleteRequest>.Failure("tg_state_key or tg_delete_all is missing or invalid.");
+        return OperationResult<DeleteRequest>.Success(new DeleteRequest
+        {
+            ChatId = chatId,
+            StateKey = state,
+            DeleteAllKeys = deleteAllKeys,
+            TopicId = TryGetInt(args, _tgTopicId, out var tid) ? tid : null,
+        });
+    }
 
     // Определяет тип сообщения на основе запроса и наличия файла.
     private OperationResult<MediaType> ResolveMedia(IDictionary<string, object> args)

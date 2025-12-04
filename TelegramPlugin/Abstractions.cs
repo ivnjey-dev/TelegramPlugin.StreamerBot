@@ -9,9 +9,11 @@ public interface ITelegramGateway
     Task<OperationResult<Response>> SendAsync(SendRequest req);
     Task DeleteAsync(long chatId, int messageId);
 }
+
 public interface IOrchestrator
 {
-    Task<OperationResult<Response>> ProcessRequestAsync(SendRequest req);
+    Task<OperationResult<Response>> ProcessSendRequestAsync(SendRequest req);
+    Task ProcessDeleteRequestAsync(BaseRequest req, bool deletePrevious = true);
 }
 
 public interface IPersistenceLayer
@@ -23,7 +25,6 @@ public interface IPersistenceLayer
 public interface IPluginLogger
 {
     void Info(string message);
-
     void Error(string message);
     void Notify(string message);
 }

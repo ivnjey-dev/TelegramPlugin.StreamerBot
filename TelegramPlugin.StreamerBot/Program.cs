@@ -25,26 +25,40 @@ public class PluginMain
 
     public bool Send(Dictionary<string, object> args)
     {
+        var entry = GetEntryOrLog(args);
+        if (entry == null) return false;
+
+        _ = entry.ExecuteSendAsync(args);
+        return true;
+    }
+
+    public bool Delete(Dictionary<string, object> args)
+    {
+        var entry = GetEntryOrLog(args);
+        if (entry == null) return false;
+    
+        _ = entry.ExecuteDeleteAsync(args);
+        return true;
+    }
+
+    private PluginEntry? GetEntryOrLog(Dictionary<string, object> args)
+    {
         if (!args.TryGetValue("tg_bot_token", out var tokenObj) ||
             string.IsNullOrWhiteSpace(tokenObj?.ToString()))
         {
             _logger.Error("Bot token missing. Please set 'tg_bot_token'.");
             _logger.Notify("tg_bot_token is missing");
-            return false;
+            return null;
         }
 
         var token = tokenObj!.ToString();
 
-        var entry = _bots.GetOrAdd(token, t => new Lazy<PluginEntry>(() =>
+        return _bots.GetOrAdd(token, t => new Lazy<PluginEntry>(() =>
         {
             _logger.Info($"Initializing Core for bot token ending in ...{t[Math.Max(0, t.Length - 4)..]}");
             var gateway = new TelegramGateway(t, _sharedClient, _logger);
             var orchestrator = new Orchestrator(gateway, _stateManager, _logger);
             return new PluginEntry(orchestrator, _parser, _logger);
         })).Value;
-
-        _ = entry.ExecuteAsync(args);
-
-        return true;
     }
 }
