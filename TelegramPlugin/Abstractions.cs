@@ -26,5 +26,6 @@ public interface IPluginLogger
 {
     void Info(string message);
     void Error(string message);
+    void Warn(string message);
     void Notify(string message);
 }

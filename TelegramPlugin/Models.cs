@@ -4,6 +4,7 @@ namespace TelegramPlugin.Enums
 {
     public enum MediaType
     {
+        Unknown,
         Auto,
         Text,
         Photo,
@@ -20,16 +21,22 @@ namespace TelegramPlugin.Models
         public bool IsSuccess { get; }
         public T Data { get; }
         public string? ErrorMessage { get; }
+        public string? WarningMessage { get; }
 
-        private OperationResult(bool success, T data, string? error)
+        public bool HasWarning => !string.IsNullOrEmpty(WarningMessage);
+        private OperationResult(bool success, T data, string? error, string? warning = null)
         {
             IsSuccess = success;
             Data = data;
             ErrorMessage = error;
+            WarningMessage = warning;
         }
 
-        public static OperationResult<T> Success(T data) => new(true, data, null);
-        public static OperationResult<T> Failure(string error) => new(false, default(T), error);
+        public static OperationResult<T> Success(T data, string? warning = null) 
+            => new(true, data, null, warning);
+        
+        public static OperationResult<T> Failure(string error) 
+            => new(false, default(T), error);
     }
 
     public class BaseRequest
@@ -42,7 +49,7 @@ namespace TelegramPlugin.Models
 
     public class SendRequest : BaseRequest
     {
-        public string? Text { get; set; }
+        public string Text { get; set; }
         public string? MediaPath { get; set; }
         public Enums.MediaType MediaType { get; set; }
 

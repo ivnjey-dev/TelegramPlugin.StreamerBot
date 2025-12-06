@@ -31,6 +31,8 @@ internal class PluginEntry
             return;
         }
 
+        if (parseResult.HasWarning) _logger.Warn(parseResult.WarningMessage!);
+
         var req = parseResult.Data;
         await ExecuteRequestAsync(async () =>
         {
