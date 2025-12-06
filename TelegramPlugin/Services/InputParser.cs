@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using TelegramPlugin.Enums;
+using TelegramPlugin.Extensions;
 using TelegramPlugin.Models;
 
 namespace TelegramPlugin.Services;
@@ -33,7 +34,7 @@ internal class InputParser
         {
             ChatId = chatId,
             TopicId = TryGetInt(args, _tgTopicId, out var tid) ? tid : null,
-            Text = GetString(args, _tgText) ?? "",
+            Text = GetString(args, _tgText)?.SmartEscape() ?? "",
             StateKey = GetString(args, _tgStateKey),
             DeletePrevious = GetBool(args, _tgDeletePrevious),
             DeleteAllKeys = GetBool(args, _tgDeleteAllKeys),
@@ -50,7 +51,7 @@ internal class InputParser
         }
 
         req.MediaType = mediaResult.Data;
-        req.MediaPath = GetString(args, _tgMediaPath);
+
         var buttonsResult = CollectButtons(args);
         if (!buttonsResult.IsSuccess)
         {
@@ -88,43 +89,75 @@ internal class InputParser
         });
     }
 
+    private MediaType GetType(IDictionary<string, object> args) =>
+        GetString(args, _tgMediaType)?.ToLower() switch
+        {
+            "text" => MediaType.Text,
+            "photo" => MediaType.Photo,
+            "video" => MediaType.Video,
+            "auto" or "Auto" or null => MediaType.Auto,
+            _ => MediaType.Unknown
+        };
+
     // Определяет тип сообщения на основе запроса и наличия файла.
     private OperationResult<MediaType> ResolveMedia(IDictionary<string, object> args)
     {
         var path = GetString(args, _tgMediaPath);
+        var type = GetType(args);
 
-        var typeStr = GetString(args, _tgMediaType)?.ToLower();
+        if (type == MediaType.Text) return OperationResult<MediaType>.Success(MediaType.Text);
 
-        switch (typeStr)
+        if (string.IsNullOrWhiteSpace(path))
         {
-            case "text":
-                return OperationResult<MediaType>.Success(MediaType.Text);
-            case "photo":
-            case "video":
-            {
-                if (string.IsNullOrEmpty(path) || !File.Exists(path))
-                {
-                    return OperationResult<MediaType>.Failure(
-                        $"Explicit media type '{typeStr}' requested, but file is missing: {path}");
-                }
-
-                return typeStr switch
-                {
-                    "photo" when !path!.IsPhoto() => OperationResult<MediaType>.Failure(
-                        $"Requested 'photo', but file extension is not an image: {path}"),
-                    "video" when !path!.IsVideo() => OperationResult<MediaType>.Failure(
-                        $"Requested 'video', but file extension is not a video: {path}"),
-                    _ => OperationResult<MediaType>.Success(typeStr == "photo" ? MediaType.Photo : MediaType.Video)
-                };
-            }
+            return type == MediaType.Auto
+                ? OperationResult<MediaType>.Success(MediaType.Text,
+                    warning: $"Path '{path}' not found. Falling back to Text.")
+                : OperationResult<MediaType>.Failure($"Explicit media type '{type}' requested, but path is empty.");
         }
 
-        if (string.IsNullOrEmpty(path) || !File.Exists(path))
-            return OperationResult<MediaType>.Success(MediaType.Text);
+        var isUrl = path!.IsUrl(out var uri);
 
-        return path!.IsPhoto()
-            ? OperationResult<MediaType>.Success(MediaType.Photo)
-            : OperationResult<MediaType>.Success(path!.IsVideo() ? MediaType.Video : MediaType.Text);
+        if (!isUrl && !File.Exists(path))
+        {
+            if (type == MediaType.Auto) return OperationResult<MediaType>.Success(MediaType.Text);
+            return OperationResult<MediaType>.Failure(
+                $"Explicit media type '{type}' requested, but file is missing: {path}");
+        }
+
+        var filenameToCheck = isUrl ? Path.GetFileName(uri?.LocalPath ?? path) : path!;
+        var looksLikePhoto = filenameToCheck.IsPhoto();
+        var looksLikeVideo = filenameToCheck.IsVideo();
+        var hasExtension = Path.HasExtension(filenameToCheck);
+
+        switch (type)
+        {
+            case MediaType.Photo:
+                if ((!isUrl || (isUrl && hasExtension)) && !looksLikePhoto)
+                    return OperationResult<MediaType>.Failure($"File is not a photo: {path}");
+                return OperationResult<MediaType>.Success(isUrl ? MediaType.PhotoUrl : MediaType.Photo);
+
+            case MediaType.Video:
+                if ((!isUrl || (isUrl && hasExtension)) && !looksLikeVideo)
+                    return OperationResult<MediaType>.Failure($"File is not a video: {path}");
+                return OperationResult<MediaType>.Success(isUrl ? MediaType.VideoUrl : MediaType.Video);
+
+            case MediaType.Auto:
+                if (looksLikePhoto)
+                    return OperationResult<MediaType>.Success(isUrl ? MediaType.PhotoUrl : MediaType.Photo);
+                if (looksLikeVideo)
+                    return OperationResult<MediaType>.Success(isUrl ? MediaType.VideoUrl : MediaType.Video);
+
+                if (isUrl)
+                    return OperationResult<MediaType>.Failure(
+                        "Could not detect media type from URL. Specify type explicitly.");
+
+
+                return OperationResult<MediaType>.Success(MediaType.Text,
+                    warning: $"Path '{path}' not found. Falling back to Text.");
+
+            default:
+                return OperationResult<MediaType>.Failure($"Unknown type: {type}");
+        }
     }
 
 
@@ -151,7 +184,6 @@ internal class InputParser
 
         return OperationResult<List<ButtonDto>>.Success(list);
     }
-
 
     // Сбор макета... todo душно конечно, перепишу на типы телеги позже
     private List<List<ButtonDto>> ApplyLayout(List<ButtonDto> flatList, string? layoutStr)
