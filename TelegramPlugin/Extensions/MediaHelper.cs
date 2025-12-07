@@ -24,12 +24,9 @@ namespace TelegramPlugin.Services
 
         public static bool IsAudio(this string path) =>
             !string.IsNullOrEmpty(path) && AudioExtensions.Contains(Path.GetExtension(path)); //аналогично
-        
-        public static bool IsUrl(this string path, out Uri? uri)
-        {
-            return Uri.TryCreate(path, UriKind.Absolute, out uri)
-                   && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
-                   || !Path.IsPathRooted(path);
-        }
+
+        public static bool IsUrl(this string path, out Uri? uri) =>
+            Uri.TryCreate(path, UriKind.Absolute, out uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 }

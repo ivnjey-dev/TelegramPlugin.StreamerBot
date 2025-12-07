@@ -37,8 +37,9 @@ internal class InputParser
             Text = GetString(args, _tgText)?.SmartEscape() ?? "",
             StateKey = GetString(args, _tgStateKey),
             DeletePrevious = GetBool(args, _tgDeletePrevious),
+            MediaPath = GetString(args, _tgMediaPath),
             DeleteAllKeys = GetBool(args, _tgDeleteAllKeys),
-            DeleteFile = GetBool(args, _tgDeleteFile),
+            DeleteFile = GetBool(args, _tgDeleteFile)
         };
         if (args.TryGetValue(_tgNotification, out var valNotify) &&
             bool.TryParse(valNotify.ToString(), out var isNotification))
@@ -49,7 +50,7 @@ internal class InputParser
         {
             return OperationResult<SendRequest>.Failure(mediaResult.ErrorMessage!);
         }
-
+        req.MediaPath = GetString(args, _tgMediaPath);
         req.MediaType = mediaResult.Data;
 
         var buttonsResult = CollectButtons(args);
@@ -65,7 +66,7 @@ internal class InputParser
             req.Buttons = ApplyLayout(flatButtons, GetString(args, _argLayout));
         }
 
-        return OperationResult<SendRequest>.Success(req);
+        return OperationResult<SendRequest>.Success(req, warning: mediaResult.WarningMessage);
     }
 
     public OperationResult<DeleteRequest> ParseDelete(IDictionary<string, object> rawArgs)
@@ -89,8 +90,8 @@ internal class InputParser
         });
     }
 
-    private MediaType GetType(IDictionary<string, object> args) =>
-        GetString(args, _tgMediaType)?.ToLower() switch
+    private MediaType GetType(string? type) =>
+        type switch
         {
             "text" => MediaType.Text,
             "photo" => MediaType.Photo,
@@ -99,11 +100,11 @@ internal class InputParser
             _ => MediaType.Unknown
         };
 
-    // Определяет тип сообщения на основе запроса и наличия файла.
     private OperationResult<MediaType> ResolveMedia(IDictionary<string, object> args)
     {
         var path = GetString(args, _tgMediaPath);
-        var type = GetType(args);
+        var srcType = GetString(args, _tgMediaType)?.ToLower();
+        var type = GetType(srcType!);
 
         if (type == MediaType.Text) return OperationResult<MediaType>.Success(MediaType.Text);
 
@@ -111,17 +112,19 @@ internal class InputParser
         {
             return type == MediaType.Auto
                 ? OperationResult<MediaType>.Success(MediaType.Text,
-                    warning: $"Path '{path}' not found. Falling back to Text.")
-                : OperationResult<MediaType>.Failure($"Explicit media type '{type}' requested, but path is empty.");
+                    warning: "Media path is empty. Falling back to Text.")
+                : OperationResult<MediaType>.Failure($"Explicit media type '{srcType}' requested, but path is empty.");
         }
 
         var isUrl = path!.IsUrl(out var uri);
 
         if (!isUrl && !File.Exists(path))
         {
-            if (type == MediaType.Auto) return OperationResult<MediaType>.Success(MediaType.Text);
+            if (type == MediaType.Auto)
+                return OperationResult<MediaType>.Success(MediaType.Text,
+                    warning: $"Path '{path}' not found (and not a valid URL). Falling back to Text.");
             return OperationResult<MediaType>.Failure(
-                $"Explicit media type '{type}' requested, but file is missing: {path}");
+                $"Explicit media type '{srcType}' requested, but local file does not exist, or it is not a valid HTTP/HTTPS URL: {path}");
         }
 
         var filenameToCheck = isUrl ? Path.GetFileName(uri?.LocalPath ?? path) : path!;
@@ -153,10 +156,10 @@ internal class InputParser
 
 
                 return OperationResult<MediaType>.Success(MediaType.Text,
-                    warning: $"Path '{path}' not found. Falling back to Text.");
+                    warning: $"File '{path}' has unknown extension (not photo/video). Falling back to Text.");
 
             default:
-                return OperationResult<MediaType>.Failure($"Unknown type: {type}");
+                return OperationResult<MediaType>.Failure($"Unknown type: {srcType}");
         }
     }
 

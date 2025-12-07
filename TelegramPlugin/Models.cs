@@ -4,13 +4,13 @@ namespace TelegramPlugin.Enums
 {
     public enum MediaType
     {
-        Unknown,
         Auto,
         Text,
         Photo,
         Video,
         PhotoUrl,
-        VideoUrl
+        VideoUrl,
+        Unknown,
     }
 }
 
@@ -24,6 +24,7 @@ namespace TelegramPlugin.Models
         public string? WarningMessage { get; }
 
         public bool HasWarning => !string.IsNullOrEmpty(WarningMessage);
+
         private OperationResult(bool success, T data, string? error, string? warning = null)
         {
             IsSuccess = success;
@@ -32,10 +33,10 @@ namespace TelegramPlugin.Models
             WarningMessage = warning;
         }
 
-        public static OperationResult<T> Success(T data, string? warning = null) 
+        public static OperationResult<T> Success(T data, string? warning = null)
             => new(true, data, null, warning);
-        
-        public static OperationResult<T> Failure(string error) 
+
+        public static OperationResult<T> Failure(string error)
             => new(false, default(T), error);
     }
 
@@ -66,7 +67,6 @@ namespace TelegramPlugin.Models
 
     public class Response
     {
-        // public Message Message { get; set; }// добавлю если понадобится...
         public int MessageId { get; set; }
     }
 
