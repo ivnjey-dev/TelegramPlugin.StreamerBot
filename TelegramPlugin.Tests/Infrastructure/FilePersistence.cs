@@ -66,6 +66,7 @@ namespace TelegramPlugin.Tests.Infrastructure
     {
         public void Info(string m) => TestContext.WriteLine($"[INFO] {m}");
         public void Error(string m) => TestContext.WriteLine($"[ERROR] {m}");
+        public void Warn(string m) => TestContext.WriteLine($"[WARNING] {m}");
         public void Notify(string m) => TestContext.WriteLine($"[NOTIFY] {m}");
     }
 }

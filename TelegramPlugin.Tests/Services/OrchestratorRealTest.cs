@@ -32,7 +32,7 @@ public class OrchestratorRealTests : BaseGatewayTests
         string keyA = "key_A";
 
         TestContext.WriteLine("1. Sending Msg A (Rich Text)...");
-        await _orchestrator.ProcessRequestAsync(new SendRequest
+        await _orchestrator.ProcessSendRequestAsync(new SendRequest
         {
             ChatId = TestChatId,
             Text = textA,
@@ -48,7 +48,7 @@ public class OrchestratorRealTests : BaseGatewayTests
         string keyB = "key_B";
 
         TestContext.WriteLine("2. Sending Msg B...");
-        await _orchestrator.ProcessRequestAsync(new SendRequest
+        await _orchestrator.ProcessSendRequestAsync(new SendRequest
         {
             ChatId = TestChatId,
             Text = textB,
@@ -62,7 +62,7 @@ public class OrchestratorRealTests : BaseGatewayTests
 
 
         TestContext.WriteLine("3. Replacing Msg A (Should delete old A, keep B)...");
-        await _orchestrator.ProcessRequestAsync(new SendRequest
+        await _orchestrator.ProcessSendRequestAsync(new SendRequest
         {
             ChatId = TestChatId,
             Text = "Message A v2 (Updated)",
@@ -92,7 +92,7 @@ public class OrchestratorRealTests : BaseGatewayTests
         // Пытаемся удалить
         try
         {
-            await _orchestrator.ProcessRequestAsync(new SendRequest
+            await _orchestrator.ProcessSendRequestAsync(new SendRequest
             {
                 ChatId = TestChatId,
                 Text = "Ignored",
@@ -177,7 +177,7 @@ public class OrchestratorRealTests : BaseGatewayTests
 
             try
             {
-                await _orchestrator.ProcessRequestAsync(new SendRequest
+                await _orchestrator.ProcessSendRequestAsync(new SendRequest
                 {
                     ChatId = TestChatId,
                     Text = text,
@@ -217,7 +217,7 @@ public class OrchestratorRealTests : BaseGatewayTests
 
             try
             {
-                await _orchestrator.ProcessRequestAsync(new SendRequest
+                await _orchestrator.ProcessSendRequestAsync(new SendRequest
                 {
                     ChatId = TestChatId,
                     Text = caption,

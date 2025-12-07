@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using TelegramPlugin.Enums;
 using TelegramPlugin.Models;
 using TelegramPlugin.Services;
 using TelegramPlugin.Tests.Infrastructure;
@@ -33,11 +34,12 @@ namespace TelegramPlugin.Tests.Services
             {
                 ChatId = TestChatId,
                 TopicId = TestTopicId,
+                MediaType = MediaType.Text,
                 Text = "Msg 1",
                 StateKey = myKey,
                 DeletePrevious = true
             };
-            await _orchestrator.ProcessRequestAsync(req1);
+            await _orchestrator.ProcessSendRequestAsync(req1);
 
             int? id1 = _stateManager.GetMessageId(TestChatId, 4, myKey);
             Assert.That(id1, Is.Not.Null.And.GreaterThan(0));
@@ -46,11 +48,12 @@ namespace TelegramPlugin.Tests.Services
             {
                 ChatId = TestChatId,
                 TopicId = null,
+                MediaType = MediaType.Text,
                 Text = "Msg 2 (Replaced)",
                 StateKey = myKey,
                 DeletePrevious = true
             };
-            await _orchestrator.ProcessRequestAsync(req2);
+            await _orchestrator.ProcessSendRequestAsync(req2);
 
             int? id2 = _stateManager.GetMessageId(TestChatId, null, myKey);
             Assert.That(id2, Is.Not.Null.And.Not.EqualTo(id1));
@@ -58,10 +61,11 @@ namespace TelegramPlugin.Tests.Services
             var req3 = new SendRequest
             {
                 ChatId = TestChatId,
+                MediaType = MediaType.Text,
                 Text = "Done",
                 DeleteAllKeys = true
             };
-            await _orchestrator.ProcessRequestAsync(req3);
+            await _orchestrator.ProcessSendRequestAsync(req3);
 
             // Проверка: Стейт для этого ключа должен быть пуст
             int? id3 = _stateManager.GetMessageId(TestChatId, null, myKey);
@@ -79,17 +83,17 @@ namespace TelegramPlugin.Tests.Services
             string key = "menu";
 
             // Чат А: Отправляет меню -> ID 10
-            await orch.ProcessRequestAsync(new SendRequest { ChatId = chatA, Text = "A", StateKey = key });
+            await orch.ProcessSendRequestAsync(new SendRequest { ChatId = chatA, Text = "A", StateKey = key });
 
             // Чат Б: Отправляет меню -> ID 20
-            await orch.ProcessRequestAsync(new SendRequest { ChatId = chatB, Text = "B", StateKey = key });
+            await orch.ProcessSendRequestAsync(new SendRequest { ChatId = chatB, Text = "B", StateKey = key });
 
             // Проверка: Ключи не пересеклись
             Assert.That(_stateManager.GetMessageId(chatA, null, key), Is.EqualTo(10));
             Assert.That(_stateManager.GetMessageId(chatB, null, key), Is.EqualTo(20));
 
             // Чат А: Удаляет своё меню
-            await orch.ProcessRequestAsync(new SendRequest
+            await orch.ProcessSendRequestAsync(new SendRequest
                 { ChatId = chatA, Text = "Del A", StateKey = key, DeletePrevious = true });
 
             // Проверка: У Чата А удалилось, у Чата Б осталось
@@ -109,11 +113,11 @@ namespace TelegramPlugin.Tests.Services
             string key = "alert";
 
             // Топик 1
-            await orch.ProcessRequestAsync(new SendRequest
+            await orch.ProcessSendRequestAsync(new SendRequest
                 { ChatId = chat, TopicId = topic1, Text = "T1", StateKey = key });
 
             // Топик 2
-            await orch.ProcessRequestAsync(new SendRequest
+            await orch.ProcessSendRequestAsync(new SendRequest
                 { ChatId = chat, TopicId = topic2, Text = "T2", StateKey = key });
 
             // Проверка
